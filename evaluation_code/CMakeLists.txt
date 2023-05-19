@@ -6,6 +6,12 @@ project( Distance_2_Tests )
 cmake_minimum_required(VERSION 2.8.10)
 set (CMAKE_CXX_STANDARD 11)
 
+find_package(Threads REQUIRED)
+if(THREADS_HAVE_PTHREAD_ARG)
+  set_property(TARGET my_app PROPERTY COMPILE_OPTIONS "-pthread")
+  set_property(TARGET my_app PROPERTY INTERFACE_COMPILE_OPTIONS "-pthread")
+endif()
+
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -27,4 +33,3 @@ if ( CGAL_FOUND )
 else()
     message(STATUS "This program requires the CGAL library, and will not be compiled.")
 endif()
-

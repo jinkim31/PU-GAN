@@ -123,9 +123,11 @@ def gen_1d_grid(num_grid_point):
     return grid
 
 def pre_load_checkpoint(checkpoint_dir):
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', checkpoint_dir)
     ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+    print(ckpt)
     if ckpt and ckpt.model_checkpoint_path:
-        # print(" [*] Reading checkpoint from {}".format(ckpt.model_checkpoint_path))
+        #print(" [*] Reading checkpoint from {}".format(ckpt.model_checkpoint_path))
         epoch_step = int(os.path.basename(ckpt.model_checkpoint_path).split('-')[1])
         return epoch_step,ckpt.model_checkpoint_path
     else:

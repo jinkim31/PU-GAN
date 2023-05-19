@@ -11,8 +11,10 @@ from Common.ops import add_scalar_summary,add_hist_summary
 from Upsampling.data_loader import Fetcher
 from Common import model_utils
 from Common import pc_util
+from Common import loss_utils
 from Common.loss_utils import pc_distance,get_uniform_loss,get_repulsion_loss,discriminator_loss,generator_loss
 from tf_ops.sampling.tf_sampling import farthest_point_sample
+from tf_ops.nn_distance import tf_nndistance
 import logging
 import os
 from tqdm import tqdm
@@ -21,6 +23,50 @@ import math
 from time import time
 from termcolor import colored
 import numpy as np
+
+from sklearn.neighbors import NearestNeighbors
+
+
+def chamfer_distance(x, y, metric='l2', direction='bi'):
+    """Chamfer distance between two point clouds
+    Parameters
+    ----------
+    x: numpy array [n_points_x, n_dims]
+        first point cloud
+    y: numpy array [n_points_y, n_dims]
+        second point cloud
+    metric: string or callable, default ‘l2’
+        metric to use for distance computation. Any metric from scikit-learn or scipy.spatial.distance can be used.
+    direction: str
+        direction of Chamfer distance.
+            'y_to_x':  computes average minimal distance from every point in y to x
+            'x_to_y':  computes average minimal distance from every point in x to y
+            'bi': compute both
+    Returns
+    -------
+    chamfer_dist: float
+        computed bidirectional Chamfer distance:
+            sum_{x_i \in x}{\min_{y_j \in y}{||x_i-y_j||**2}} + sum_{y_j \in y}{\min_{x_i \in x}{||x_i-y_j||**2}}
+    """
+
+    if direction == 'y_to_x':
+        x_nn = NearestNeighbors(n_neighbors=1, leaf_size=1, algorithm='kd_tree', metric=metric).fit(x)
+        min_y_to_x = x_nn.kneighbors(y)[0]
+        chamfer_dist = np.mean(min_y_to_x)
+    elif direction == 'x_to_y':
+        y_nn = NearestNeighbors(n_neighbors=1, leaf_size=1, algorithm='kd_tree', metric=metric).fit(y)
+        min_x_to_y = y_nn.kneighbors(x)[0]
+        chamfer_dist = np.mean(min_x_to_y)
+    elif direction == 'bi':
+        x_nn = NearestNeighbors(n_neighbors=1, leaf_size=1, algorithm='kd_tree', metric=metric).fit(x)
+        min_y_to_x = x_nn.kneighbors(y)[0]
+        y_nn = NearestNeighbors(n_neighbors=1, leaf_size=1, algorithm='kd_tree', metric=metric).fit(y)
+        min_x_to_y = y_nn.kneighbors(x)[0]
+        chamfer_dist = np.mean(min_y_to_x) + np.mean(min_x_to_y)
+    else:
+        raise ValueError("Invalid direction type. Supported types: \'y_x\', \'x_y\', \'bi\'")
+
+    return chamfer_dist
 
 class Model(object):
   def __init__(self,opts,sess):
@@ -255,7 +301,6 @@ class Model(object):
 
       saver = tf.train.Saver()
       restore_epoch, checkpoint_path = model_utils.pre_load_checkpoint(self.opts.log_dir)
-      print(checkpoint_path)
       saver.restore(self.sess, checkpoint_path)
 
       samples = glob(self.opts.test_data)
@@ -286,6 +331,8 @@ class Model(object):
           idx = farthest_point_sample(out_point_num, pred_pc[np.newaxis, ...]).eval()[0]
           pred_pc = pred_pc[idx, 0:3]
           np.savetxt(path[:-4] + '.xyz',pred_pc,fmt='%.6f')
+
+          print('CHAMFER:', chamfer_distance(pc, pred_pc))
 
   def log_string(self,msg):
       #global LOG_FOUT

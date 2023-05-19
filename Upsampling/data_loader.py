@@ -74,12 +74,18 @@ class Fetcher(threading.Thread):
         self.stopped = False
         self.opts = opts
         self.use_random_input = self.opts.use_non_uniform
+
         self.input_data, self.gt_data, self.radius_data = load_h5_data(self.opts.train_file,opts=self.opts,use_randominput=self.use_random_input)
+        self.input_data = self.input_data[:4000]
+        self.radius_data = self.radius_data[:4000]
+        self.input_data = self.input_data[:4000]
+
         self.batch_size = self.opts.batch_size
         self.sample_cnt = self.input_data.shape[0]
         self.patch_num_point = self.opts.patch_num_point
         self.num_batches = self.sample_cnt//self.batch_size
         print ("NUM_BATCH is %s"%(self.num_batches))
+        print ("input data shape:", self.input_data.shape)
 
     def run(self):
         while not self.stopped:

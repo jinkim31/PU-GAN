@@ -31,6 +31,9 @@ def run():
     # open session
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
+    run_config.gpu_options.per_process_gpu_memory_fraction = 0.9
+    run_config.gpu_options.polling_inactive_delay_msecs = 10
+
     with tf.Session(config=run_config) as sess:
         model = Model(FLAGS,sess)
         if FLAGS.phase == 'train':

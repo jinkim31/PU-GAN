@@ -1,2 +1,6 @@
-
-*.txt
+data/test/output
+data/train
+evaluation_code/build
+evaluation_code/CMakeFiles
+log
+model
