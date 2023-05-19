@@ -1,0 +1,19 @@
+- library simlink
+ln -s libtensorflow_framework.so.1 libtensorflow_framework.so
+
+
+- build docker
+docker build -t pugan .
+
+- run docker
+docker run -it --gpus all --runtime=nvidia -v $(pwd):/workspace/ -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -w /workspace pugan
+
+
+apt-get install python3-tk
+
+python pu_gan.py --phase train
+
+
+
+cd Desktop/PU-GAN/ && docker run -it --gpus all --runtime=nvidia -v $(pwd):/workspace/ -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -w /workspace pugan
+
